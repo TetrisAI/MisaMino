@@ -8,6 +8,7 @@
 
 #include "profile.h"
 #include <map>
+#include <numeric>
 
 
 PIMAGE colorCell( int w, int h, color_t normal, color_t lt, color_t rb ) {
@@ -237,10 +238,7 @@ void tetris_draw(const TetrisGame& tetris, bool showAttackLine, bool showGrid) {
         }
     }
     if ( ! tetris.accept_atts.empty() ) {
-        int atts = 0;
-        for ( std::vector<int>::const_iterator it = tetris.accept_atts.begin(); it != tetris.accept_atts.end(); ++it ) {
-            atts += *it;
-        }
+        int atts = std::accumulate(tetris.accept_atts.begin(), tetris.accept_atts.end(), 0);
 
         setfillcolor(hsv2rgb(0.0f, 1.0f, 1.0f));
         int bx = int(tetris.m_base.x + tetris.m_size.x * (4)) + tetris.m_size.x / 2;
@@ -1303,10 +1301,7 @@ void mainscene() {
                             next.push_back(tetris[i].m_next[j]);
                         double beg = (double)::GetTickCount() / 1000;
                         int deep = ai_search_height_deep;
-                        int upcomeAtt = 0;
-                        for ( int j = 0; j < tetris[i].accept_atts.size(); ++j ) {
-                            upcomeAtt += tetris[i].accept_atts[j];
-                        }
+                        int upcomeAtt = std::accumulate(tetris[i].accept_atts.begin(), tetris[i].accept_atts.end(), 0);
                         int level = ai[i].level;
                         //if ( tetris[i].m_pool.row[6] ) {
                         //    deep = ai_search_height_deep;

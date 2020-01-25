@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <atomic>
 
 #include "tetris.h"
 #include "tetris_ai.h"
@@ -308,7 +309,7 @@ public:
 public:
     bool hold;
     AI::Moving ai_movs;
-    int ai_movs_flag;
+    std::atomic<int> ai_movs_flag;
     int ai_last_deep;
     int ai_delay;
     AI::AIName_t pAIName;

@@ -1722,7 +1722,7 @@ namespace AI {
     struct AI_THREAD_PARAM {
         TetrisAI_t func;
         Moving* ret_mov;
-        int* flag;
+        std::atomic<int>* flag;
         AI_Param ai_param;
         GameField pool;
         int hold;
@@ -1736,7 +1736,7 @@ namespace AI {
         int *searchDeep;
         int level;
         int player;
-        AI_THREAD_PARAM(TetrisAI_t _func, Moving& _ret_mov, int& _flag, const AI_Param& _ai_param, const GameField& _pool, int _hold, Gem _cur, int _x, int _y, const std::vector<Gem>& _next, bool _canhold, int _upcomeAtt, int _maxDeep, int & _searchDeep, int _level, int _player) {
+        AI_THREAD_PARAM(TetrisAI_t _func, Moving& _ret_mov, std::atomic<int>& _flag, const AI_Param& _ai_param, const GameField& _pool, int _hold, Gem _cur, int _x, int _y, const std::vector<Gem>& _next, bool _canhold, int _upcomeAtt, int _maxDeep, int & _searchDeep, int _level, int _player) {
             func = _func;
             ret_mov = &_ret_mov;
             flag = &_flag;
@@ -1831,7 +1831,7 @@ namespace AI {
         delete p;
         _endthread();
     }
-    int RunAI(Moving& ret_mov, int& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
+    int RunAI(Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
         _beginthread(AI_Thread, 0, new AI_THREAD_PARAM(NULL, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player) );
         return 0;
@@ -1889,7 +1889,7 @@ namespace AI {
         delete p;
         _endthread();
     }
-    int RunAIDll(TetrisAI_t func, Moving& ret_mov, int& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
+    int RunAIDll(TetrisAI_t func, Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
         _beginthread(AI_Thread_Dll, 0, new AI_THREAD_PARAM(func, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player) );
         return 0;
