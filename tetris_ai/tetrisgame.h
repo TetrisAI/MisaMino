@@ -13,9 +13,58 @@
 #include "sound.h"
 
 #include "tetris_setting.h"
-
+#define hx(x) this->x=t.x
 class TetrisGame : public AI::Tetris {
 public:
+	void operator=(const TetrisGame &t) {
+		this->n_win = t.n_win;
+		this->total_clears = t.total_clears;
+		this->n_pieces = t.n_pieces;
+		this->total_atts = t.total_atts;
+		this->total_sent = t.total_sent;
+		this->total_accept_atts = t.total_accept_atts;
+		this->m_drop_frame = t.m_drop_frame;
+		this->m_max_combo = t.m_max_combo;
+		this->m_clear_info = t.m_clear_info;
+		hx(ai_delay);
+		hx(mov_llrr );
+		hx(env_change );
+		hx(accept_atts);
+		hx(n_pieces );
+		hx(ai_last_deep );
+		hx(m_ai_param);
+		hx(mSFXon);
+		hx(m_last_hole_x);
+		hx(m_curnum);
+		hx(m_cur_x);
+		hx(m_cur_y);
+		hx(m_hold);
+		hx(ai_delay);
+		hx(m_cur);
+		hx(m_pool);
+		hx(m_rand);
+		hx(m_state);
+		hx(m_frames);
+		hx(m_next_num);
+		hx(m_att_info);
+		hx(m_ko);
+		hx(m_lr);
+		hx(m_piecedelay);
+		hx(m_randatt);
+		hx(m_ai_param);
+		hx(m_last_hole_x );
+		hx(total_clears );
+		hx(total_atts );
+		hx(total_sent );
+		hx(total_accept_atts );
+		hx(m_ko );
+		hx(m_att_info);
+
+		memcpy(this->m_color_pool, t.m_color_pool, sizeof t.m_color_pool);
+		memcpy(this->m_next, t.m_next, sizeof t.m_next);
+		hx(m_next_num);
+	}
+
     TetrisGame() {
         m_base = AI::point(0, 30);
         m_size = AI::point(20, 20);
@@ -306,6 +355,8 @@ public:
     void soundon( bool on ) {
         mSFXon = on;
     }
+
+	
 public:
     bool hold;
     AI::Moving ai_movs;

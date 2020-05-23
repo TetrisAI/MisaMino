@@ -8,8 +8,12 @@
 
 #include "profile.h"
 #include <map>
+
 #include <numeric>
 
+
+
+TetrisGame t, t2;
 
 PIMAGE colorCell( int w, int h, color_t normal, color_t lt, color_t rb ) {
     PIMAGE img;
@@ -388,9 +392,10 @@ void setkeyScene( int player_keys[] ) {
         "hold",
         "hard drop",
         "180rotate",
+		"revert",
     };
     int t_player_keys[16];
-    for ( int i = 0; i < 8; ++i ) {
+    for ( int i = 0; i < 9; ++i ) {
         for ( t_player_keys[i] = 0; is_run() && t_player_keys[i] == 0; delay_fps(60) ) {
             if ( kbmsg() ) {
                 key_msg k = getkey();
@@ -405,7 +410,7 @@ void setkeyScene( int player_keys[] ) {
             xyprintf(0, 0, "press a key for %s (ESC to cancel & return)", name[i]);
         }
     }
-    for ( int i = 0; i < 8; ++i ) {
+    for ( int i = 0; i < 9; ++i ) {
         player_keys[i] = t_player_keys[i];
     }
 }
@@ -413,7 +418,7 @@ void setkeyScene( int player_keys[] ) {
 void loadKeySetting( int player_keys[] ) {
     FILE* fp = fopen("misamino.cfg", "r");
     if ( fp ) {
-        for ( int i = 0; i < 8; ++i) {
+        for ( int i = 0; i < 9; ++i) {
             fscanf(fp, "%d", &player_keys[i]);
         }
         fclose(fp);
@@ -423,7 +428,7 @@ void loadKeySetting( int player_keys[] ) {
 void saveKeySetting( int player_keys[] ) {
     FILE* fp = fopen("misamino.cfg", "w");
     if ( fp ) {
-        for ( int i = 0; i < 8; ++i) {
+        for ( int i = 0; i < 9; ++i) {
             fprintf(fp, " %d", player_keys[i]);
         }
         fprintf(fp, "\n");
@@ -510,8 +515,8 @@ struct tetris_ai {
     int PieceMul;
     std::string plugin;
     tetris_ai() {
-        style = 2;
-        level = 4;
+        style = 0;
+        level = 8;
         PieceMul = 0;
         plugin = "dllai.dll";
     }
@@ -527,6 +532,7 @@ struct tetris_rule {
     int combo_table_style;
     int samesequence;
     int turn;
+	int revert;
     tetris_rule() {
         turnbase = 1;
         garbage = 0;
@@ -536,7 +542,8 @@ struct tetris_rule {
         GarbageBlocking = 1;
         combo_table_style = 0;
         samesequence = 1;
-        turn = 1;
+        turn = 7;
+		revert = 1;
     }
 };
 struct tetris_player {
@@ -579,12 +586,13 @@ void loadAI(CProfile& config, tetris_ai ai[]) {
     }
 }
 void loadRule(CProfile& config, tetris_rule& rule) {
+	int kos_turnbase;
     config.SetSection( "Rule" );
     if ( config.IsInteger( "turnbase" ) ) {
         rule.turnbase = config.ReadInteger( "turnbase" );
     }
     if ( config.IsInteger( "KOS_turnbase" ) ) {
-        int kos_turnbase = config.ReadInteger( "KOS_turnbase" );
+        kos_turnbase = config.ReadInteger( "KOS_turnbase" );
         if ( kos_turnbase ) rule.turn = 7;
     }
     if ( config.IsInteger( "spin180" ) ) {
@@ -609,6 +617,15 @@ void loadRule(CProfile& config, tetris_rule& rule) {
     if ( config.IsInteger( "combo_table_style" ) ) {
         rule.combo_table_style = config.ReadInteger( "combo_table_style" );
     }
+	if (config.IsInteger("turn")) {
+
+			rule.turn = config.ReadInteger("turn");
+	}
+	if (config.IsInteger("revert")) {
+		if(kos_turnbase)
+			rule.revert = config.ReadInteger("revert");
+	}
+
 }
 void loadPlayerSetting(CProfile& config, tetris_player& player) {
     config.SetSection( "Player" );
@@ -699,7 +716,7 @@ void mainscene() {
     int players_num = 2;
     std::vector<TetrisGame> tetris(players_num);
     AI::Random rnd( (unsigned) time( 0 ) );
-    int player_keys[8] = {
+    int player_keys[9] = {
         key_left,
         key_right,
         key_down,
@@ -707,7 +724,8 @@ void mainscene() {
         'C',
         'V',
         key_space,
-        'X'
+        'X',
+		'R'
     };
     loadKeySetting( player_keys );
 #ifndef XP_RELEASE
@@ -750,7 +768,7 @@ void mainscene() {
     ai_mov_time /= 2; // fps=60
     int ai_mov_time_base = 13; // 实际值由ai_mov_time决定，初始值不用管
 
-    int player_key_state[8] = {0};
+    int player_key_state[9] = {0};
     int player_last_key = 0;
 
     std::string game_info;
@@ -1057,8 +1075,10 @@ void mainscene() {
     }
     double ai_time = 0;
     int lastGameState = -1;
+	bool sw;
     for ( ; is_run() ; normal_delay ? delay_fps(60) : delay_ms(0) ) {
         for ( int jf = 0; jf < mainloop_times; ++jf) {
+
 #ifndef XP_RELEASE
             if ( AI_TRAINING_SLOW == 0 ) {
                 for ( int i = 0; i < players_num; ++i ) {
@@ -1087,6 +1107,11 @@ void mainscene() {
                 }
                 lastGameState = -1;
             }
+			if (sw) {
+				t = tetris[0];
+				t2 = tetris[1];
+				sw = false;
+			}
             if ( ! ai_eve ) {
                 while ( kbmsg() ) {
                     key_msg k = getkey();
@@ -1102,7 +1127,7 @@ void mainscene() {
                         && (tetris[0].n_pieces - 1) / rule.turn > (tetris[1].n_pieces - 1) / rule.turn )
                     {
                         bool match = false;
-                        for ( int i = 0; i < 8; ++i ) {
+                        for ( int i = 0; i < 9; ++i ) {
                             if ( k.key == player_keys[i] ) match = true;
                         }
                         player_key_state[0] = 0;
@@ -1111,7 +1136,7 @@ void mainscene() {
                         if ( match ) continue;
                     }
                     if ( k.msg == key_msg_up ) {
-                        for ( int i = 0; i < 8; ++i ) {
+                        for ( int i = 0; i < 9; ++i ) {
                             if ( player_key_state[i] && (k.key == player_keys[i] ) ) {
                                 player_key_state[i] = 0;
                             }
@@ -1166,6 +1191,11 @@ void mainscene() {
                         tetris[0].trySpin180();
                         player_key_state[7] = 1;
                     }
+					if (k.key == player_keys[8] && player_key_state[8] == 0 && rule.turn > 1) {
+						tetris[0] = t;
+						tetris[1] = t2;
+						player_key_state[8] = 1;
+					}
                     if ( k.key == key_f2 ) {
                         if ( !tetris[0].alive() || !tetris[1].alive() || tetris[0].n_pieces <= 20 ) {
                             int seed = (unsigned)time(0), pass = rnd.randint(1024);
@@ -1188,7 +1218,7 @@ void mainscene() {
                     }
                     if ( k.key == key_f4 ) {
                         showGrid = !showGrid;
-                    }
+                    } 
                     if ( k.key == key_f5 || k.key == key_f6 ) {
                         char str[64];
                         if ( k.key == key_f5 ) GameSound::ins().setVolumeAdd(-0.05f) ;
@@ -1228,7 +1258,10 @@ void mainscene() {
                 }
             }
             for ( int i = 0; i < players_num; ++i ) {
+
                 if ( tetris[i].game() ) { // 游戏执行，如果丢下返回true
+					if(i != 0)
+						sw = true;
                     tetris[i].env_change = 1;
                     tetris[i].n_pieces += 1;
 

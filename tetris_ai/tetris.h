@@ -142,7 +142,7 @@ namespace AI {
         }
         bool tryHold() {
             if ( m_state != STATE_MOVING ) return false;
-            if ( m_hold ) return false;
+            //if ( m_hold ) return false;
             m_hold = true;
             int hold = m_pool.m_hold;
             m_pool.m_hold = m_cur.num;
