@@ -57,7 +57,7 @@ public:
         int play( int lr = 0) {
             mIndex = (mIndex+1) % mMax;
             //m[mIndex]->Stop();
-            setVolume( *mVolume );
+            //setVolume( *mVolume );
             if ( lr == 1 ) {
                 BASS_ChannelSetAttribute(m[mIndex], BASS_ATTRIB_PAN, -0.7);
             } else if ( lr == 2 ){
